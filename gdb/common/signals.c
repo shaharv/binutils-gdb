@@ -23,6 +23,21 @@
 #include <signal.h>
 #endif
 
+/* Hack for supporting internal musl-libc signals, defined in:
+   http://git.musl-libc.org/cgit/musl/tree/src/internal/pthread_impl.h */
+
+#ifndef SIGTIMER
+#define SIGTIMER 32
+#endif
+
+#ifndef SIGCANCEL
+#define SIGCANCEL 33
+#endif
+
+#ifndef SIGSYNCCALL
+#define SIGSYNCCALL 34
+#endif
+
 #include "gdb_signals.h"
 
 struct gdbarch;
@@ -104,6 +119,7 @@ gdb_signal_from_name (const char *name)
     if (signals[sig].name != NULL
 	&& strcmp (name, signals[sig].name) == 0)
       return sig;
+
   return GDB_SIGNAL_UNKNOWN;
 }
 
@@ -334,6 +350,15 @@ gdb_signal_from_host (int hostsig)
 #if defined (SIGLIBRT)
   if (hostsig == SIGLIBRT)
     return GDB_SIGNAL_LIBRT;
+#endif
+
+#if defined (SIGTIMER)
+  if (hostsig == SIGTIMER)
+    return GDB_SIGNAL_TIMER;
+#endif
+#if defined (SIGSYNCCALL)
+  if (hostsig == SIGSYNCCALL)
+    return GDB_SIGNAL_SYNCCALL;
 #endif
 
 #if defined (REALTIME_LO)
@@ -591,6 +616,15 @@ do_gdb_signal_to_host (enum gdb_signal oursig,
 #if defined (SIGLIBRT)
     case GDB_SIGNAL_LIBRT:
       return SIGLIBRT;
+#endif
+
+#if defined (SIGTIMER)
+    case GDB_SIGNAL_TIMER:
+      return SIGTIMER;
+#endif
+#if defined (SIGSYNCCALL)
+    case GDB_SIGNAL_SYNCCALL:
+      return SIGSYNCCALL;
 #endif
 
     default:
